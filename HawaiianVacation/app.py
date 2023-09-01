@@ -94,9 +94,37 @@ def stations():
 
     return jsonify(stations)
 
+@app.route("/api/v1.0/tobs")
+def tobs():
 
+    session = Session(engine)
 
+    prior_year = dt.date(2017, 8, 23) - dt.timedelta(days=365)
+    
+    measurement_station_combined = session.query(Measurement.station, Station.name, func.count(Measurement.station)).\
+    filter(Measurement.station == Station.station).group_by(Measurement.station).\
+        order_by(func.count(Measurement.station).desc()).all()
 
+    most_active_station = measurement_station_combined[0].station
+
+    twelve_months_temp = session.query(Measurement.tobs).\
+    filter(Measurement.station == most_active_station).\
+    filter(Measurement.date >= prior_year).all()\
+    
+    session.close()
+
+    temp_obs = list(np.ravel(twelve_months_temp))
+
+    return jsonify(temp_obs)
+
+@app.route("/api/v1.0/<start>")
+def start_date(start):
+
+    session = Session(engine)
+
+    
+
+    session.close()
 
 
 if __name__ == "__main__":
