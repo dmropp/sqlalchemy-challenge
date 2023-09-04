@@ -59,8 +59,8 @@ def welcome():
         f"/api/v1.0/precipitation for 12 months of precipitation data<br/>"
         f"/api/v1.0/stations for a list of stations from the dataset<br/>"
         f"/api/v1.0/tobs for 12 months of temperature observations from the most active weather station<br/>"
-        f"/api/v1.0/<start> for tmin, tmax, and tavg for all dates greater than or equal to the start date. Please enter date in yyyymmdd format<br/>"
-        f"/api/v1.0/<start>/<end> for tmin, tmax, and tavg for all dates from the start date to the end date. Please enter date in yyyymmdd format"
+        f"/api/v1.0/start for tmin, tmax, and tavg for all dates greater than or equal to the start date. Please enter date in yyyymmdd format e.g. /api/v1.0/20150104<br/>"
+        f"/api/v1.0/start/end for tmin, tmax, and tavg for all dates from the start date to the end date. Please enter dates in yyyymmdd format e.g. /api/v1.0/20130617/20140204"
     )
 
 @app.route("/api/v1.0/precipitation")
@@ -150,6 +150,24 @@ def start_date(start):
     
     else:
         return jsonify(temp_data)
+    
+@app.route("/api/v1.0/<start>/<end>")
+def date_range(start, end):
+
+    session = Session(engine)
+
+    temp_data_in_range = session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs)).\
+        filter(Measurement.date >= start).\
+        filter(Measurement.date <= end).all()
+
+    session.close()
+
+    temp_data_inclusive = list(np.ravel(temp_data_in_range))
+
+    if temp_data_inclusive[0] is None:
+        return jsonify({"Eror": "Date not found. Please enter date in yyymmdd format starting before 20170823"}), 404
+    else:
+        return jsonify(temp_data_inclusive)
     
 if __name__ == "__main__":
     app.run(debug=True)
