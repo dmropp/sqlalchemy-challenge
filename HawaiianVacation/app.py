@@ -59,8 +59,8 @@ def welcome():
         f"/api/v1.0/precipitation for 12 months of precipitation data<br/>"
         f"/api/v1.0/stations for a list of stations from the dataset<br/>"
         f"/api/v1.0/tobs for 12 months of temperature observations from the most active weather station<br/>"
-        f"/api/v1.0/<start> for tmin, tmax, and tavg for all dates greater than or equal to the start date<br/>"
-        f"/api/v1.0/<start>/<end> for tmin, tmax, and tavg for all dates from the start date to the end date<br/>"
+        f"/api/v1.0/<start> for tmin, tmax, and tavg for all dates greater than or equal to the start date. Please enter date in yyyymmdd format<br/>"
+        f"/api/v1.0/<start>/<end> for tmin, tmax, and tavg for all dates from the start date to the end date. Please enter date in yyyymmdd format"
     )
 
 @app.route("/api/v1.0/precipitation")
@@ -124,16 +124,33 @@ def start_date(start):
 
     # canonicalized = start.
 
-    data_from_start_date = session.query(Measurement.tobs).\
-        filter(Measurement.date >= start).all()    
+    # data_from_start_date = session.query(Measurement.tobs).\
+    #     filter(Measurement.date >= start).all()   
 
+    # min_temp_from_start_date = session.query(func.min(Measurement.tobs)).\
+    #     filter(Measurement.date >= start).all()
+    
+    # avg_temp_from_start_date = session.query(func.avg(Measurement.tobs)).\
+    #     filter(Measurement.date >= start).all()
+    
+    # max_temp_from_start_date = session.query(func.max(Measurement.tobs)).\
+    #     filter(Measurement.date >= start).all()
+    
+    temp_data_from_date = session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs)).\
+        filter(Measurement.date >= start).all()
+    
     session.close()
 
-    temp_data_from_date = list(np.ravel(data_from_start_date))
+    #temp_data_from_date = list(np.ravel(data_from_start_date))
 
-    return jsonify(temp_data_from_date)
+    temp_data = list(np.ravel(temp_data_from_date))
 
-
+    if temp_data[0] is None:
+        return jsonify({"Error": "Date not found. Please enter date in yyyymmdd format starting before 20170823"}), 404
+    
+    else:
+        return jsonify(temp_data)
+    
 if __name__ == "__main__":
     app.run(debug=True)
 
