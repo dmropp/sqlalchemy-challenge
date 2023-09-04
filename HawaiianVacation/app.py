@@ -73,7 +73,7 @@ def precipitation():
     prior_year = dt.date(2017, 8, 23) - dt.timedelta(days=365)
 
     precip_query = session.query(Measurement.date, Measurement.prcp).\
-                filter(Measurement.date >= prior_year).all()
+        filter(Measurement.date >= prior_year).all()
     
     session.close()
 
@@ -108,8 +108,8 @@ def tobs():
     most_active_station = measurement_station_combined[0].station
 
     twelve_months_temp = session.query(Measurement.tobs).\
-    filter(Measurement.station == most_active_station).\
-    filter(Measurement.date >= prior_year).all()\
+        filter(Measurement.station == most_active_station).\
+        filter(Measurement.date >= prior_year).all()
     
     session.close()
 
@@ -122,9 +122,16 @@ def start_date(start):
 
     session = Session(engine)
 
-    
+    # canonicalized = start.
+
+    data_from_start_date = session.query(Measurement.tobs).\
+        filter(Measurement.date >= start).all()    
 
     session.close()
+
+    temp_data_from_date = list(np.ravel(data_from_start_date))
+
+    return jsonify(temp_data_from_date)
 
 
 if __name__ == "__main__":
