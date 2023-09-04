@@ -18,12 +18,8 @@ from flask import Flask, jsonify
 # Database Setup
 #################################################
 
-# engine = create_engine("sqlite:///Resources//hawaii.sqlite")
-
 # https://stackoverflow.com/questions/4636970/sqlite3-operationalerror-unable-to-open-database-file, referenced for how to fix unable to open database file error
 engine = create_engine("sqlite:///C:\\Users\\dmrop\\Desktop\\Assignments\\Starter_Code\\sqlalchemy-challenge\\HawaiianVacation\\Resources\\hawaii.sqlite")
-
-
 
 # reflect an existing database into a new model
 
@@ -68,12 +64,8 @@ def precipitation():
 
     session = Session(engine)
 
-    session.query(Measurement.date).order_by(Measurement.date.desc()).first()
-
-    prior_year = dt.date(2017, 8, 23) - dt.timedelta(days=365)
-
     precip_query = session.query(Measurement.date, Measurement.prcp).\
-        filter(Measurement.date >= prior_year).all()
+        filter(Measurement.date >= (dt.date(2017, 8, 23) - dt.timedelta(days=365))).all()
     
     session.close()
 
@@ -98,9 +90,7 @@ def stations():
 def tobs():
 
     session = Session(engine)
-
-    prior_year = dt.date(2017, 8, 23) - dt.timedelta(days=365)
-    
+ 
     measurement_station_combined = session.query(Measurement.station, Station.name, func.count(Measurement.station)).\
     filter(Measurement.station == Station.station).group_by(Measurement.station).\
         order_by(func.count(Measurement.station).desc()).all()
@@ -109,7 +99,7 @@ def tobs():
 
     twelve_months_temp = session.query(Measurement.tobs).\
         filter(Measurement.station == most_active_station).\
-        filter(Measurement.date >= prior_year).all()
+        filter(Measurement.date >= (dt.date(2017, 8, 23) - dt.timedelta(days=365))).all()
     
     session.close()
 
@@ -121,27 +111,11 @@ def tobs():
 def start_date(start):
 
     session = Session(engine)
-
-    # canonicalized = start.
-
-    # data_from_start_date = session.query(Measurement.tobs).\
-    #     filter(Measurement.date >= start).all()   
-
-    # min_temp_from_start_date = session.query(func.min(Measurement.tobs)).\
-    #     filter(Measurement.date >= start).all()
-    
-    # avg_temp_from_start_date = session.query(func.avg(Measurement.tobs)).\
-    #     filter(Measurement.date >= start).all()
-    
-    # max_temp_from_start_date = session.query(func.max(Measurement.tobs)).\
-    #     filter(Measurement.date >= start).all()
-    
+   
     temp_data_from_date = session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs)).\
         filter(Measurement.date >= start).all()
     
     session.close()
-
-    #temp_data_from_date = list(np.ravel(data_from_start_date))
 
     temp_data = list(np.ravel(temp_data_from_date))
 
@@ -165,11 +139,9 @@ def date_range(start, end):
     temp_data_inclusive = list(np.ravel(temp_data_in_range))
 
     if temp_data_inclusive[0] is None:
-        return jsonify({"Eror": "Date not found. Please enter date in yyymmdd format starting before 20170823"}), 404
+        return jsonify({"Error": "Date not found. Please enter date in yyymmdd format starting before 20170823"}), 404
     else:
         return jsonify(temp_data_inclusive)
     
 if __name__ == "__main__":
     app.run(debug=True)
-
-# session.close()
